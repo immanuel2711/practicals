@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'practicals'
-        DOCKER_REGISTRY = 'docker.io'  // Replace with your registry if different
+        DOCKER_IMAGE = 'immanuel2711/practicals'  // Use your Docker Hub username in the repository name
+        DOCKER_REGISTRY = 'docker.io'  // Docker registry (docker.io for Docker Hub)
     }
 
     stages {
@@ -42,12 +42,12 @@ pipeline {
                 script {
                     // Use credentials from Jenkins to log in to Docker registry
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
-                                                      usernameVariable: 'DOCKER_USER', 
-                                                      passwordVariable: 'DOCKER_PASSWORD')]) {
+                                                      usernameVariable: 'immanuel2711', 
+                                                      passwordVariable: 'emman2702')]) {
                         // Perform Docker login using the credentials
                         sh 'echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY -u $DOCKER_USER --password-stdin'
                         // Push the Docker image
-                        sh 'docker push ${DOCKER_IMAGE}:latest'
+                        sh 'docker push ${DOCKER_IMAGE}:latest'  // Ensure you're pushing to your account's repo
                     }
                 }
             }
