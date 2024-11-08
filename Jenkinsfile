@@ -1,18 +1,14 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_IMAGE = 'immanuel2711/practicals'  // Use your Docker Hub username in the repository name
-        DOCKER_REGISTRY = 'docker.io'  // Docker registry (docker.io for Docker Hub)
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds') // Jenkins credential ID for Docker Hub credentials
     }
-
     stages {
-        stage('Declarative: Checkout SCM') {
+        stage('Checkout SCM') {
             steps {
                 checkout scm
             }
         }
-
         stage('Install Dependencies') {
             steps {
                 script {
@@ -20,7 +16,6 @@ pipeline {
                 }
             }
         }
-
         stage('Run Tests') {
             steps {
                 script {
@@ -28,50 +23,39 @@ pipeline {
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                    sh 'docker build -t immanuel2711/practicals .'
                 }
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Use credentials from Jenkins to log in to Docker registry
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
-                                                      usernameVariable: 'immanuel2711', 
-                                                      passwordVariable: 'emman2702')]) {
-                        // Perform Docker login using the credentials
-                        sh 'echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY -u $DOCKER_USER --password-stdin'
-                        // Push the Docker image
-                        sh 'docker push ${DOCKER_IMAGE}:latest'  // Ensure you're pushing to your account's repo
-                    }
+                    // Perform Docker login with credentials stored in Jenkins
+                    sh '''
+                    docker login -u ${DOCKER_CREDENTIALS_USR} -p ${DOCKER_CREDENTIALS_PSW}
+                    '''
+                    sh 'docker push immanuel2711/practicals:latest'
                 }
             }
         }
-
         stage('Deploy to Container') {
             steps {
                 script {
-                    // Add deployment logic here (if required)
-                    echo 'Deploy to container stage skipped'
+                    echo 'Deploying to container...'
+                    // Add deployment steps here (if needed)
                 }
             }
         }
-
-        stage('Declarative: Post Actions') {
-            steps {
-                cleanWs()
-            }
-        }
     }
-
     post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
         failure {
-            echo 'Pipeline failed. Check the logs for errors.'
+            echo 'Pipeline failed, please check the logs for details.'
         }
     }
 }
