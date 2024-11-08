@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "express": "^4.21.1"
+  },
+  "scripts": {
+    "test": "echo 'No tests specified' && exit 0"
   }
+}
 
-}
-"scripts": {
-  "test": "echo 'No tests specified' && exit 0"
-}
