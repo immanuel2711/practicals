@@ -2,24 +2,20 @@ pipeline {
     agent any
 
     environment {
-        // Define the Docker image name
         DOCKER_IMAGE = 'practicals'
-        // Define the container name
-        CONTAINER_NAME = 'practicals_container1'
+        DOCKER_REGISTRY = 'docker.io'  // Replace with your registry if different
     }
 
     stages {
-        stage('Checkout') {
+        stage('Declarative: Checkout SCM') {
             steps {
-                // Clone the repository
-                git 'https://github.com/immanuel2711/practicals.git'
+                checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Install Node.js dependencies
                     sh 'npm install'
                 }
             }
@@ -28,8 +24,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    // Run unit tests (if available)
-                    sh 'npm test || echo "No tests found, skipping this stage."'
+                    sh 'npm test'
                 }
             }
         }
@@ -37,8 +32,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image with the specified name
-                    sh 'docker build -t $DOCKER_IMAGE .'
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
                 }
             }
         }
@@ -46,10 +40,14 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Log in to Docker Hub using Jenkins credentials
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'immanuel2711', passwordVariable: 'emman2702')]) {
-                        sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                        sh 'docker push $DOCKER_IMAGE'
+                    // Use credentials from Jenkins to log in to Docker registry
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
+                                                      usernameVariable: 'DOCKER_USER', 
+                                                      passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Perform Docker login using the credentials
+                        sh 'echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY -u $DOCKER_USER --password-stdin'
+                        // Push the Docker image
+                        sh 'docker push ${DOCKER_IMAGE}:latest'
                     }
                 }
             }
@@ -58,24 +56,20 @@ pipeline {
         stage('Deploy to Container') {
             steps {
                 script {
-                    // Stop and remove the existing container if it is running
-                    sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
-                    
-                    // Run the new container with the updated image
-                    sh 'docker run -d -p 3000:3000 --name $CONTAINER_NAME $DOCKER_IMAGE'
+                    // Add deployment logic here (if required)
+                    echo 'Deploy to container stage skipped'
                 }
+            }
+        }
+
+        stage('Declarative: Post Actions') {
+            steps {
+                cleanWs()
             }
         }
     }
 
     post {
-        always {
-            // Clean up the workspace
-            cleanWs()
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
         failure {
             echo 'Pipeline failed. Check the logs for errors.'
         }
